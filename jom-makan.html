@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Jom Makan! 🇲🇾</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --red:#E8341C;--yellow:#F5C518;--green:#1DB954;
+  --dark:#0E0E0E;--surface:#1A1A1A;--surface2:#242424;
+  --border:rgba(255,255,255,0.08);--text:#F5F5F5;--muted:#888;
+  --r:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+button{font:inherit;border:none;cursor:pointer}
+input{font:inherit}
+
+.bg{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:48px 48px}
+.bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(232,52,28,0.15),transparent)}
+.floaters{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.floater{position:absolute;font-size:2rem;opacity:0.06;animation:drift var(--d,8s) ease-in-out infinite alternate;animation-delay:var(--dl,0s)}
+@keyframes drift{0%{transform:translate(0,0) rotate(-5deg)}100%{transform:translate(var(--tx,20px),var(--ty,-30px)) rotate(8deg)}}
+
+.wrap{position:relative;z-index:2;width:min(640px,calc(100% - 32px));margin:0 auto;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 0}
+.screen{display:none;width:100%;animation:fadeUp .4s ease both}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:clamp(24px,5vw,40px)}
+
+/* WELCOME */
+.flag-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.02em;margin-bottom:20px}
+.hero-title{font-family:'Syne',sans-serif;font-size:clamp(3rem,10vw,5.5rem);font-weight:900;line-height:.95;letter-spacing:-.04em;margin-bottom:12px}
+.hero-title .accent{color:var(--red)}
+.hero-sub{font-size:1rem;line-height:1.65;color:var(--muted);margin-bottom:32px;max-width:480px}
+.input-row{display:flex;gap:10px;flex-wrap:wrap}
+.name-input{flex:1 1 220px;height:52px;padding:0 18px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;font-weight:500;outline:none;transition:.2s}
+.name-input:focus{border-color:var(--red);background:rgba(232,52,28,.06)}
+.name-input.shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(4px)}}
+.start-btn{height:52px;padding:0 24px;border-radius:12px;background:var(--red);color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;transition:.2s;white-space:nowrap}
+.start-btn:hover{background:#cf2b14;transform:translateY(-2px)}
+.err-msg{font-size:13px;color:var(--red);margin-top:10px;min-height:18px;font-weight:500}
+.food-grid{display:flex;gap:10px;flex-wrap:wrap;margin-top:32px}
+.food-chip{width:52px;height:52px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);display:grid;place-items:center;font-size:1.5rem}
+
+/* GAME */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.pill{padding:6px 14px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);font-size:13px;font-weight:600;color:var(--muted)}
+.pill.hi{color:var(--yellow);border-color:rgba(245,197,24,.3)}
+.pill-name{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.progress-bar-wrap{height:4px;border-radius:999px;background:var(--surface2);margin-bottom:28px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--red),var(--yellow));transition:width .5s cubic-bezier(.4,0,.2,1)}
+.category-label{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.emoji-box{width:100%;aspect-ratio:16/7;border-radius:20px;background:var(--surface2);border:1px solid var(--border);display:grid;place-items:center;font-size:clamp(3rem,10vw,6rem);letter-spacing:.06em;margin-bottom:20px}
+.q-label{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:16px}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt-btn{padding:16px 14px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-size:14px;font-weight:600;text-align:left;transition:.18s}
+.opt-btn:hover:not(:disabled){border-color:rgba(255,255,255,.25);background:#2a2a2a;transform:translateY(-2px)}
+.opt-btn:disabled{cursor:default}
+.opt-btn.correct{background:rgba(29,185,84,.15);border-color:#1DB954;color:#1DB954}
+.opt-btn.wrong{background:rgba(232,52,28,.15);border-color:var(--red);color:var(--red)}
+.opt-btn.dimmed{opacity:.3}
+
+/* OVERLAY */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);display:none;place-items:center;padding:16px}
+.overlay.active{display:grid;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{width:min(520px,100%);background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:clamp(20px,4vw,32px);animation:popIn .35s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes popIn{from{opacity:0;transform:scale(.88) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal.good{border-color:rgba(29,185,84,.35)}
+.modal.bad{border-color:rgba(232,52,28,.35)}
+.modal-title{font-family:'Syne',sans-serif;font-size:clamp(1.5rem,4vw,2.2rem);font-weight:900;letter-spacing:-.04em;margin-bottom:4px}
+.modal-sub{font-size:14px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+
+/* MEME CARD - built-in, always works */
+.meme-card{
+  border-radius:16px;overflow:hidden;
+  margin-bottom:16px;
+  min-height:220px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:24px;
+  position:relative;
+  text-align:center;
+}
+.meme-card.happy{background:linear-gradient(135deg,#0a2e14,#0d3d1a);border:1px solid rgba(29,185,84,.25)}
+.meme-card.sad{background:linear-gradient(135deg,#2e0a0a,#3d0d0d);border:1px solid rgba(232,52,28,.25)}
+.meme-big-emoji{font-size:5rem;line-height:1;animation:memePulse 1s ease-in-out infinite alternate}
+@keyframes memePulse{from{transform:scale(1) rotate(-3deg)}to{transform:scale(1.1) rotate(3deg)}}
+.meme-top-text{font-family:'Syne',sans-serif;font-weight:900;font-size:clamp(1rem,3vw,1.4rem);letter-spacing:-.02em;text-transform:uppercase;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.5);line-height:1.2}
+.meme-bottom-text{font-size:13px;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:.05em;text-transform:uppercase}
+.meme-decorations{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.meme-decorations span{position:absolute;font-size:1.4rem;opacity:0.2;animation:floatDec var(--d,4s) ease-in-out infinite alternate;animation-delay:var(--dl,0s)}
+@keyframes floatDec{0%{transform:translate(0,0)}100%{transform:translate(var(--dx,10px),var(--dy,-10px))}}
+
+.answer-tag{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:16px}
+.answer-tag strong{color:#1DB954}
+.next-btn{width:100%;height:50px;border-radius:12px;background:var(--red);color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;transition:.2s}
+.next-btn:hover{background:#cf2b14;transform:translateY(-2px)}
+
+/* RESULT */
+.result-hero{text-align:center;padding:8px 0 24px}
+.result-icon{font-size:5rem;margin-bottom:12px;display:block;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.result-score{font-family:'Syne',sans-serif;font-size:clamp(4rem,15vw,8rem);font-weight:900;letter-spacing:-.06em;line-height:1;margin:8px 0}
+.result-score span{color:var(--red)}
+.rank-pill{display:inline-block;padding:8px 20px;border-radius:999px;background:rgba(245,197,24,.12);border:1px solid rgba(245,197,24,.3);color:var(--yellow);font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:.02em;margin-bottom:12px}
+.result-msg{font-size:15px;color:var(--muted);line-height:1.6;margin-bottom:28px;max-width:420px;margin-left:auto;margin-right:auto}
+.replay-btn{width:100%;height:52px;border-radius:12px;background:var(--red);color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;transition:.2s}
+.replay-btn:hover{background:#cf2b14;transform:translateY(-2px)}
+
+/* CONFETTI */
+.confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:100;overflow:hidden}
+.confetti-piece{position:absolute;top:-20px;width:10px;height:16px;border-radius:3px;animation:fall var(--d) linear forwards}
+@keyframes fall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(540deg);opacity:0}}
+
+@media(max-width:480px){.options{grid-template-columns:1fr}.input-row{flex-direction:column}.start-btn{width:100%}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="bg-glow"></div>
+<div class="floaters" id="floaters" aria-hidden="true"></div>
+<div class="confetti-layer" id="confetti" aria-hidden="true"></div>
+
+<div class="wrap">
+  <!-- WELCOME -->
+  <section class="screen active" id="welcomeScreen">
+    <div class="card">
+      <div class="flag-tag">🇲🇾 Malaysian Food Quiz</div>
+      <h1 class="hero-title">Jom<br><span class="accent">Makan!</span></h1>
+      <p class="hero-sub">Guess Malaysian dishes from emoji clues. 10 questions across Malay, Chinese and Indian food. How well do you know your makan?</p>
+      <div class="input-row">
+        <input id="nameInput" class="name-input" type="text" maxlength="18" placeholder="Your name" autocomplete="off"/>
+        <button class="start-btn" id="startBtn">Start Quiz 🍜</button>
+      </div>
+      <p class="err-msg" id="errMsg"></p>
+      <div class="food-grid" aria-hidden="true">
+        <div class="food-chip">🍚</div><div class="food-chip">🥥</div><div class="food-chip">🍢</div>
+        <div class="food-chip">🍜</div><div class="food-chip">🫓</div><div class="food-chip">🌶️</div>
+        <div class="food-chip">🍖</div><div class="food-chip">🍵</div><div class="food-chip">🍧</div>
+        <div class="food-chip">🍌</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section class="screen" id="gameScreen">
+    <div class="card">
+      <div class="topbar">
+        <div class="pill pill-name" id="namePill">Player</div>
+        <div class="pill" id="qPill">1 / 10</div>
+        <div class="pill hi" id="scorePill">0 pts</div>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:10%"></div></div>
+      <p class="category-label" id="categoryLabel">🌙 Malay</p>
+      <div class="emoji-box"><div id="emojiClue">🍚🥥🌶️🥜</div></div>
+      <p class="q-label">Which Malaysian dish is this?</p>
+      <div class="options" id="optionsGrid"></div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="resultScreen">
+    <div class="card">
+      <div class="result-hero">
+        <span class="result-icon" id="resultIcon">🏆</span>
+        <div class="result-score" id="finalScore">0<span>/100</span></div>
+        <div class="rank-pill" id="rankPill">Legend 🏆</div>
+        <p class="result-msg" id="resultMsg">Amazing!</p>
+        <button class="replay-btn" id="replayBtn">Play Again 🔁</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- REACTION MODAL -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+  <div class="modal" id="modal">
+    <p class="modal-title" id="modalTitle">Correct!</p>
+    <p class="modal-sub" id="modalSub">Great makan knowledge.</p>
+    <div class="meme-card" id="memeCard">
+      <div class="meme-decorations" id="memeDecorations"></div>
+      <div class="meme-top-text" id="memeTopText">BETUL LAH!</div>
+      <div class="meme-big-emoji" id="memeBigEmoji">🎉</div>
+      <div class="meme-bottom-text" id="memeBottomText">CONFIRMED FOODIE</div>
+    </div>
+    <div class="answer-tag">Answer: <strong id="answerSpan">—</strong></div>
+    <button class="next-btn" id="nextBtn">Next →</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    emoji:"🍚🥥🌶️🥜", category:"🌙 Malay", answer:"Nasi Lemak",
+    options:["Nasi Goreng","Nasi Lemak","Nasi Dagang","Nasi Kerabu"],
+    happy:{emoji:"🍚😍",top:"BETUL LAH!",bottom:"nasi lemak supremacy",deco:["🥥","🌶️","🥜","⭐"],bg:"happy"},
+    sad:{emoji:"😭🍚",top:"AIYO...",bottom:"it was nasi lemak bro",deco:["💀","😭","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🥩🍢🔥🥜", category:"🌙 Malay", answer:"Satay",
+    options:["Kebab","Rendang","Satay","Ayam Percik"],
+    happy:{emoji:"🍢🔥",top:"POWER LAH!",bottom:"satay king confirmed",deco:["🥜","🔥","⭐","✨"],bg:"happy"},
+    sad:{emoji:"😬🍢",top:"CLOSE ONE...",bottom:"that was satay la",deco:["💀","😩","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🐄🥥🌶️🍖", category:"🌙 Malay", answer:"Rendang",
+    options:["Kari Daging","Rendang","Asam Pedas","Sup Daging"],
+    happy:{emoji:"🍖🏆",top:"STEADY BEB!",bottom:"rendang expert",deco:["🌶️","🥥","⭐","🔥"],bg:"happy"},
+    sad:{emoji:"😅🍖",top:"SALAH...",bottom:"rendang is life tho",deco:["💀","😭","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🍌🍃🥥🍬", category:"🌙 Malay", answer:"Kuih Lepat Pisang",
+    options:["Cendol","Ondeh Ondeh","Kuih Seri Muka","Kuih Lepat Pisang"],
+    happy:{emoji:"🍌✅",top:"CONFIRM BETUL!",bottom:"kuih master",deco:["🍃","🥥","⭐","🍬"],bg:"happy"},
+    sad:{emoji:"😭🍌",top:"ALAMAK...",bottom:"kuih lepat pisang bro",deco:["💀","😩","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🍜🥚🔥🦐", category:"🏮 Chinese", answer:"Char Kuey Teow",
+    options:["Hokkien Mee","Wantan Mee","Char Kuey Teow","Pan Mee"],
+    happy:{emoji:"🍜🔥",top:"SHIOK LAH!",bottom:"char kuey teow pro",deco:["🥚","🦐","⭐","🔥"],bg:"happy"},
+    sad:{emoji:"😢🍜",top:"ADUH...",bottom:"char kuey teow la bro",deco:["💀","😭","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🍖🌿🧄♨️", category:"🏮 Chinese", answer:"Bak Kut Teh",
+    options:["Tom Yam","Sup Tulang","Steamboat","Bak Kut Teh"],
+    happy:{emoji:"🍖✨",top:"BAGUS GILER!",bottom:"bak kut teh sifu",deco:["🌿","🧄","⭐","♨️"],bg:"happy"},
+    sad:{emoji:"😳🍖",top:"HAIYA...",bottom:"bak kut teh lor",deco:["💀","😩","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🍚🐔🥢🫕", category:"🏮 Chinese", answer:"Nasi Ayam",
+    options:["Nasi Lemak","Claypot Rice","Nasi Goreng","Nasi Ayam"],
+    happy:{emoji:"🐔🏆",top:"CORRECT ONE!",bottom:"nasi ayam fanatic",deco:["🥢","🍚","⭐","✅"],bg:"happy"},
+    sad:{emoji:"😬🐔",top:"WRONG LA...",bottom:"simple nasi ayam also miss",deco:["💀","😭","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🫓🧈🍛", category:"🇮🇳 Indian", answer:"Roti Canai",
+    options:["Capati","Naan","Roti Canai","Tosai"],
+    happy:{emoji:"🫓🔥",top:"LEPAK LAH!",bottom:"roti canai enjoyer",deco:["🧈","🍛","⭐","🔥"],bg:"happy"},
+    sad:{emoji:"😭🫓",top:"TERUK LAH...",bottom:"roti canai bro basic stuff",deco:["💀","😩","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🍵🥛☕🧊", category:"🇮🇳 Indian", answer:"Teh Tarik",
+    options:["Kopi O","Bandung","Milo Ais","Teh Tarik"],
+    happy:{emoji:"☕👑",top:"TARIK QUEEN!",bottom:"teh tarik lover confirmed",deco:["🍵","🥛","⭐","✨"],bg:"happy"},
+    sad:{emoji:"😢☕",top:"SAYANG...",bottom:"it was teh tarik la",deco:["💀","😭","🥲","❌"],bg:"sad"}
+  },
+  {
+    emoji:"🍚🌶️🍅🐔", category:"🇮🇳 Indian", answer:"Nasi Briyani",
+    options:["Nasi Goreng","Kari Ayam","Nasi Briyani","Nasi Kandar"],
+    happy:{emoji:"🍚👑",top:"LEGEND STATUS!",bottom:"briyani boss",deco:["🌶️","🍅","⭐","🔥"],bg:"happy"},
+    sad:{emoji:"😅🍚",top:"SO CLOSE...",bottom:"nasi briyani lah",deco:["💀","😩","🥲","❌"],bg:"sad"}
+  }
+];
+
+const state={name:"",q:0,score:0,locked:false,ctx:null};
+const $=id=>document.getElementById(id);
+
+function showScreen(s){
+  [$("welcomeScreen"),$("gameScreen"),$("resultScreen")].forEach(el=>{
+    el.classList.remove("active");el.style.animation="none";
+  });
+  void s.offsetWidth;s.style.animation="";s.classList.add("active");
+}
+
+// Floaters
+(function(){
+  const emojis=["🍚","🥥","🌶️","🍢","🍜","☕","🍧","🥩","🍌","🥘","🥚","🫓","🍛","🧋"];
+  const f=$("floaters");
+  for(let i=0;i<20;i++){
+    const s=document.createElement("span");
+    s.className="floater";s.textContent=emojis[i%emojis.length];
+    s.style.left=Math.random()*100+"%";s.style.top=Math.random()*100+"%";
+    s.style.setProperty("--tx",(Math.random()*80-40)+"px");
+    s.style.setProperty("--ty",(Math.random()*80-40)+"px");
+    s.style.setProperty("--d",(5+Math.random()*7)+"s");
+    s.style.setProperty("--dl",(-Math.random()*4)+"s");
+    f.appendChild(s);
+  }
+})();
+
+function initAudio(){
+  if(state.ctx)return;
+  try{state.ctx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}
+}
+function beep(type){
+  if(!state.ctx)return;
+  const map={click:[300,.04,"sine"],correct:[660,.14,"triangle"],wrong:[120,.2,"sawtooth"],win:[880,.22,"triangle"]};
+  const[f,d,w]=map[type]||map.click;
+  const now=state.ctx.currentTime;
+  const o=state.ctx.createOscillator(),g=state.ctx.createGain();
+  o.type=w;o.frequency.value=f;
+  g.gain.setValueAtTime(.0001,now);
+  g.gain.exponentialRampToValueAtTime(.1,now+.015);
+  g.gain.exponentialRampToValueAtTime(.0001,now+d);
+  o.connect(g);g.connect(state.ctx.destination);
+  o.start(now);o.stop(now+d+.05);
+  if(type==="correct"||type==="win"){
+    setTimeout(()=>{
+      const n=state.ctx.currentTime,o2=state.ctx.createOscillator(),g2=state.ctx.createGain();
+      o2.type="triangle";o2.frequency.value=type==="win"?1100:840;
+      g2.gain.setValueAtTime(.0001,n);g2.gain.exponentialRampToValueAtTime(.08,n+.015);g2.gain.exponentialRampToValueAtTime(.0001,n+.12);
+      o2.connect(g2);g2.connect(state.ctx.destination);o2.start(n);o2.stop(n+.18);
+    },100);
+  }
+}
+
+$("startBtn").addEventListener("click",startGame);
+$("nameInput").addEventListener("keydown",e=>{if(e.key==="Enter")startGame()});
+document.addEventListener("click",()=>initAudio(),{once:true});
+
+function startGame(){
+  initAudio();
+  const raw=$("nameInput").value.trim().replace(/[<>]/g,"");
+  if(!raw){
+    $("nameInput").classList.remove("shake");void $("nameInput").offsetWidth;$("nameInput").classList.add("shake");
+    $("errMsg").textContent="Enter your name to begin.";beep("wrong");return;
+  }
+  $("errMsg").textContent="";
+  state.name=raw;state.q=0;state.score=0;state.locked=false;
+  beep("click");showScreen($("gameScreen"));renderQ();
+}
+
+function renderQ(){
+  state.locked=false;
+  const q=questions[state.q];
+  $("namePill").textContent=state.name;
+  $("qPill").textContent=`${state.q+1} / ${questions.length}`;
+  $("scorePill").textContent=`${state.score} pts`;
+  $("progressFill").style.width=`${((state.q+1)/questions.length)*100}%`;
+  $("categoryLabel").textContent=q.category;
+  $("emojiClue").textContent=q.emoji;
+  const grid=$("optionsGrid");grid.innerHTML="";
+  q.options.forEach(opt=>{
+    const b=document.createElement("button");
+    b.className="opt-btn";b.textContent=opt;b.type="button";
+    b.addEventListener("click",()=>pick(opt,b));
+    grid.appendChild(b);
+  });
+}
+
+function pick(selected,btn){
+  if(state.locked)return;
+  state.locked=true;
+  const q=questions[state.q];
+  const correct=selected===q.answer;
+  if(correct){state.score+=10;beep("correct")}else{beep("wrong")}
+  [...$("optionsGrid").querySelectorAll(".opt-btn")].forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===q.answer)b.classList.add("correct");
+    else if(b===btn&&!correct)b.classList.add("wrong");
+    else b.classList.add("dimmed");
+  });
+  $("scorePill").textContent=`${state.score} pts`;
+  setTimeout(()=>showModal(correct),600);
+}
+
+function showModal(correct){
+  const q=questions[state.q];
+  const meme=correct?q.happy:q.sad;
+  $("modal").className="modal "+(correct?"good":"bad");
+  $("modalTitle").textContent=correct?`Betul! 🎉`:`Salah! 😬`;
+  $("modalSub").textContent=correct?"Your makan knowledge is strong.":`The correct answer was ${q.answer}.`;
+  $("answerSpan").textContent=q.answer;
+
+  // Build meme
+  const card=$("memeCard");
+  card.className="meme-card "+meme.bg;
+  $("memeTopText").textContent=meme.top;
+  $("memeBigEmoji").textContent=meme.emoji;
+  $("memeBottomText").textContent=meme.bottom;
+
+  // Floating decorations inside meme
+  const deco=$("memeDecorations");deco.innerHTML="";
+  const positions=[[10,10],[80,15],[15,75],[75,70],[45,5],[5,45],[90,50],[50,90]];
+  meme.deco.forEach((e,i)=>{
+    const sp=document.createElement("span");
+    sp.textContent=e;
+    sp.style.left=(positions[i%positions.length][0])+"%";
+    sp.style.top=(positions[i%positions.length][1])+"%";
+    sp.style.setProperty("--d",(2+Math.random()*3)+"s");
+    sp.style.setProperty("--dl",(-Math.random()*2)+"s");
+    sp.style.setProperty("--dx",(Math.random()*20-10)+"px");
+    sp.style.setProperty("--dy",(Math.random()*20-10)+"px");
+    deco.appendChild(sp);
+  });
+
+  $("overlay").classList.add("active");
+}
+
+$("nextBtn").addEventListener("click",()=>{
+  beep("click");
+  $("overlay").classList.remove("active");
+  state.q++;
+  if(state.q>=questions.length)showResult();
+  else renderQ();
+});
+
+function showResult(){
+  showScreen($("resultScreen"));
+  const n=state.score/10;
+  let icon,rank,msg;
+  if(n>=9){icon="🏆";rank="Makan Legend 🏆";msg=`${state.name}, you know Malaysian food better than most. Respect.`;confetti();beep("win")}
+  else if(n>=6){icon="😎";rank="Boleh Tahan 😎";msg=`Solid, ${state.name}. You can order for the whole table.`;beep("correct")}
+  else if(n>=3){icon="😋";rank="Okay Lah 😋";msg=`Not bad, ${state.name}. A few more rounds at the mamak and you'll get there.`;beep("click")}
+  else{icon="😅";rank="Jom Makan 😅";msg=`${state.name}, time to visit the pasar malam more often.`;beep("wrong")}
+  $("resultIcon").textContent=icon;
+  $("rankPill").textContent=rank;
+  $("resultMsg").textContent=msg;
+  animScore(0,state.score,900);
+}
+
+function animScore(from,to,dur){
+  const start=performance.now();
+  function tick(now){
+    const p=Math.min((now-start)/dur,1);
+    const ease=1-Math.pow(1-p,3);
+    $("finalScore").innerHTML=`${Math.round(from+(to-from)*ease)}<span>/100</span>`;
+    if(p<1)requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+$("replayBtn").addEventListener("click",()=>{
+  beep("click");state.q=0;state.score=0;state.locked=false;
+  showScreen($("gameScreen"));renderQ();
+});
+
+function confetti(){
+  const layer=$("confetti");layer.innerHTML="";
+  const colors=["#E8341C","#F5C518","#1DB954","#1877F2","#fff","#ff6b9d"];
+  for(let i=0;i<80;i++){
+    const p=document.createElement("span");
+    p.className="confetti-piece";
+    p.style.left=Math.random()*100+"%";
+    p.style.background=colors[i%colors.length];
+    p.style.setProperty("--d",(2+Math.random()*2.5)+"s");
+    p.style.animationDelay=(Math.random()*.8)+"s";
+    layer.appendChild(p);
+    setTimeout(()=>p.remove(),5000);
+  }
+}
+</script>
+</body>
+</html>
